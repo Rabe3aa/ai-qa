@@ -7,7 +7,6 @@ build:
       - echo "Build phase started"
       - python -m pip install --upgrade pip
       - pip install -r backend/requirements.txt
-      - echo "Build completed successfully"
 
 run:
   runtime-version: 3.8
