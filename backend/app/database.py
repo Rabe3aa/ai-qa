@@ -5,6 +5,7 @@ from .config import settings
 import boto3
 import json
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,8 @@ def get_secret_value(secret_name: str, key: str = None) -> str:
             return os.getenv(key, "")
         return os.getenv(secret_name.replace("/", "_").replace("-", "_").upper(), "")
 
-# Get database URL from secrets or config
-try:
-    database_url = get_secret_value("qa-system/database-url", "DATABASE_URL")
-    if not database_url:
-        database_url = settings.database_url
-except:
-    database_url = settings.database_url
+# Get database URL preferring environment variable and settings; avoid network calls at import time
+database_url = os.getenv("DATABASE_URL") or settings.database_url
 
 engine = create_engine(database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

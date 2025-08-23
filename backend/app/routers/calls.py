@@ -15,8 +15,12 @@ from ..config import settings
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-s3_client = boto3.client('s3', region_name=settings.aws_region)
-qa_service = EnhancedQAService()
+# Lazy initialization to avoid startup-time side effects
+def get_s3_client():
+    return boto3.client('s3', region_name=settings.aws_region)
+
+def get_qa_service():
+    return EnhancedQAService()
 
 @router.post("/upload-url", response_model=UploadResponse)
 async def create_upload_url(
@@ -32,7 +36,7 @@ async def create_upload_url(
         s3_key = f"uploads/{project_id}/{file_id}_{request.filename}"
         
         # Create presigned URL
-        upload_url = s3_client.generate_presigned_url(
+        upload_url = get_s3_client().generate_presigned_url(
             'put_object',
             Params={
                 'Bucket': settings.aws_s3_bucket_input,
@@ -97,6 +101,7 @@ def process_call_analysis(call_id: int, model: str = "gpt-4o"):
         job_name = f"qa-call-{call_id}-{int(datetime.now().timestamp())}"
         
         # Start transcription
+        qa_service = get_qa_service()
         s3_output_key = qa_service.start_transcription(call.s3_key, job_name)
         call.transcription_job_name = job_name
         call.s3_output_key = s3_output_key

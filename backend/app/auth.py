@@ -6,20 +6,16 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from .config import settings
-from .database import get_db, get_secret_value
+from .database import get_db
+import os
 from .models import User
 from .schemas import TokenData
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Get JWT secret from AWS Secrets Manager or config
-try:
-    SECRET_KEY = get_secret_value("qa-system/jwt-secret", "SECRET_KEY")
-    if not SECRET_KEY:
-        SECRET_KEY = settings.secret_key
-except:
-    SECRET_KEY = settings.secret_key
+# Get JWT secret from environment or settings (no network calls at import time)
+SECRET_KEY = os.getenv("SECRET_KEY") or settings.secret_key
 
 ALGORITHM = settings.algorithm
 

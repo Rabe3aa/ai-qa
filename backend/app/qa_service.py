@@ -5,20 +5,15 @@ import logging
 from typing import Dict, Any, Optional
 from openai import OpenAI
 from .config import settings
-from .database import get_secret_value
+import os
 
 logger = logging.getLogger(__name__)
 
 class EnhancedQAService:
     def __init__(self):
-        # Get OpenAI API key from secrets or config
-        try:
-            openai_key = get_secret_value("qa-system/openai-key", "OPENAI_API_KEY")
-            if not openai_key:
-                openai_key = settings.openai_api_key
-        except:
-            openai_key = settings.openai_api_key
-            
+        # Get OpenAI API key from environment or settings (no network calls)
+        openai_key = os.getenv("OPENAI_API_KEY") or settings.openai_api_key
+        
         self.openai_client = OpenAI(
             api_key=openai_key,
             max_retries=settings.openai_max_retries,
