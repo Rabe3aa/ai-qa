@@ -26,6 +26,12 @@ run:
       value: '["*"]'
     - name: AUTO_SEED_DEMO
       value: "true"
+    - name: OPENAI_API_KEY
+      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key"
+    - name: SECRET_KEY
+      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret"
+    - name: DATABASE_URL
+      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url"
     - name: OPENAI_MAX_RETRIES
       value: "3"
     - name: OPENAI_BACKOFF_BASE_SECONDS
