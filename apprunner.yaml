@@ -27,11 +27,11 @@ run:
     - name: AUTO_SEED_DEMO
       value: "true"
     - name: OPENAI_API_KEY
-      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key"
+      value: "sk-test-placeholder-key-for-testing"
     - name: SECRET_KEY
-      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret"
+      value: "test-secret-key-change-in-production"
     - name: DATABASE_URL
-      value_from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url"
+      value: "sqlite:///./qa_system.db"
     - name: OPENAI_MAX_RETRIES
       value: "3"
     - name: OPENAI_BACKOFF_BASE_SECONDS
