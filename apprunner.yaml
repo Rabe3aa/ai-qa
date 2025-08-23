@@ -6,11 +6,13 @@ build:
     build:
       - echo "Build phase started"
       - cd backend
+      - python -m pip install --upgrade pip
       - pip install -r requirements.txt
+      - echo "Build completed successfully"
 
 run:
-  runtime-version: 3.9
-  command: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
+  runtime-version: 3.11
+  command: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
   network:
     port: 8000
     env: PORT
@@ -37,3 +39,7 @@ run:
       value: "900"
     - name: TRANSCRIBE_POLL_INTERVAL_SECONDS
       value: "5.0"
+    - name: PYTHONPATH
+      value: "/opt/render/project/src/backend"
+    - name: PYTHONUNBUFFERED
+      value: "1"
