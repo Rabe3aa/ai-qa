@@ -1,11 +1,13 @@
 version: 1.0
 runtime: python3
+
 build:
   commands:
     build:
       - echo "Build phase started"
       - cd backend
       - pip install -r requirements.txt
+
 run:
   runtime-version: 3.9
   command: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -15,3 +17,23 @@ run:
   env:
     - name: PORT
       value: "8000"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_S3_BUCKET_INPUT
+      value: "qa-system-input-046246466895"
+    - name: AWS_S3_BUCKET_OUTPUT
+      value: "qa-system-output-046246466895"
+    - name: ALLOWED_ORIGINS
+      value: '["*"]'
+    - name: AUTO_SEED_DEMO
+      value: "true"
+    - name: OPENAI_MAX_RETRIES
+      value: "3"
+    - name: OPENAI_BACKOFF_BASE_SECONDS
+      value: "2.0"
+    - name: OPENAI_REQUEST_TIMEOUT_SECONDS
+      value: "45"
+    - name: TRANSCRIBE_MAX_WAIT_SECONDS
+      value: "900"
+    - name: TRANSCRIBE_POLL_INTERVAL_SECONDS
+      value: "5.0"
