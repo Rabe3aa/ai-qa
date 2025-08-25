@@ -29,10 +29,16 @@ class EnhancedQAService:
             media_uri = f"s3://{settings.aws_s3_bucket_input}/{s3_key}"
             output_key = f"transcriptions/{job_name}.json"
             
+            # Determine media format from file extension (default to 'wav' if unknown)
+            ext = os.path.splitext(s3_key)[1].lower().lstrip('.')
+            allowed_formats = {'mp3', 'mp4', 'wav', 'flac', 'ogg', 'amr', 'webm', 'm4a'}
+            media_format = ext if ext in allowed_formats else 'wav'
+            logger.info(f"Starting transcription job {job_name} with media format '{media_format}' for key '{s3_key}'")
+            
             self.transcribe_client.start_transcription_job(
                 TranscriptionJobName=job_name,
                 Media={'MediaFileUri': media_uri},
-                MediaFormat='wav',
+                MediaFormat=media_format,
                 LanguageCode='en-US',
                 OutputBucketName=settings.aws_s3_bucket_output,
                 OutputKey=output_key
