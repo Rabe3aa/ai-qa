@@ -6,7 +6,7 @@ from ..models import Project, User
 from ..schemas import Project as ProjectSchema, ProjectCreate, ProjectUpdate
 from ..auth import get_current_active_user, require_company_manager
 
-router = APIRouter(prefix="/projects", tags=["projects"])
+router = APIRouter()
 
 @router.post("/", response_model=ProjectSchema)
 async def create_project(
