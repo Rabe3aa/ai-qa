@@ -19,12 +19,12 @@ async def lifespan(app: FastAPI):
     logger.info("Starting QA System API...")
     
     # Temporarily disable database and scheduler for debugging
-    # Base.metadata.create_all(bind=engine)
-    # logger.info("Database tables created")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created")
     
-    # if settings.auto_seed_demo:
-    #     logger.info("Seeding demo data...")
-    #     seed_demo_data()
+    if settings.auto_seed_demo:
+        logger.info("Seeding demo data...")
+        seed_demo_data()
     
     # start_scheduler()
     # logger.info("Background scheduler started")
