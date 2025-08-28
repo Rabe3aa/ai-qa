@@ -12,34 +12,36 @@ run:
   command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --log-level debug
   network:
     port: 8000
-  env:
-    - name: PORT
-      value: "8000"
-    - name: AWS_REGION
-      value: "us-east-1"
-    - name: AWS_S3_BUCKET_INPUT
-      value: "qa-system-input-046246466895"
-    - name: AWS_S3_BUCKET_OUTPUT
-      value: "qa-system-output-046246466895"
-    - name: ALLOWED_ORIGINS
-      value: '["*"]'
-    - name: AUTO_SEED_DEMO
-      value: "true"
-    - name: OPENAI_API_KEY
-      value: "sk-test-placeholder-key-for-testing"
-    - name: SECRET_KEY
-      value: "test-secret-key-change-in-production"
-    - name: DATABASE_URL
-      value: "sqlite:///./qa_system.db"
-    - name: OPENAI_MAX_RETRIES
-      value: "3"
-    - name: OPENAI_BACKOFF_BASE_SECONDS
-      value: "2.0"
-    - name: OPENAI_REQUEST_TIMEOUT_SECONDS
-      value: "45"
-    - name: TRANSCRIBE_MAX_WAIT_SECONDS
-      value: "900"
-    - name: TRANSCRIBE_POLL_INTERVAL_SECONDS
-      value: "5.0"
-    - name: PYTHONUNBUFFERED
-      value: "1"
+  environment:
+    variables:
+      - name: PORT
+        value: "8000"
+      - name: AWS_REGION
+        value: "us-east-1"
+      - name: AWS_S3_BUCKET_INPUT
+        value: "qa-system-input-046246466895"
+      - name: AWS_S3_BUCKET_OUTPUT
+        value: "qa-system-output-046246466895"
+      - name: ALLOWED_ORIGINS
+        value: '["*"]'
+      - name: AUTO_SEED_DEMO
+        value: "true"
+      - name: OPENAI_MAX_RETRIES
+        value: "3"
+      - name: OPENAI_BACKOFF_BASE_SECONDS
+        value: "2.0"
+      - name: OPENAI_REQUEST_TIMEOUT_SECONDS
+        value: "45"
+      - name: TRANSCRIBE_MAX_WAIT_SECONDS
+        value: "900"
+      - name: TRANSCRIBE_POLL_INTERVAL_SECONDS
+        value: "5.0"
+      - name: PYTHONUNBUFFERED
+        value: "1"
+    secrets:
+      - name: OPENAI_API_KEY
+        value: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key-XJBJaf
+      - name: SECRET_KEY
+        value: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret-LLQ7bc
+      - name: DATABASE_URL
+        value: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url-2cVZUy
