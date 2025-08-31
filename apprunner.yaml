@@ -9,12 +9,10 @@ build:
 
 run:
   runtime-version: 3.8
-  # IMPORTANT: use --app-dir and read the injected PORT
-  command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT} --log-level debug --lifespan off
+  command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --log-level debug --lifespan off
   network:
     port: 8000
 
-  # normal (non-secret) env vars — DO NOT set PORT here
   env:
     - name: AWS_REGION
       value: "us-east-1"
@@ -39,7 +37,6 @@ run:
     - name: PYTHONUNBUFFERED
       value: "1"
 
-  # Secrets from Secrets Manager (values must be PLAIN strings)
   secrets:
     - name: OPENAI_API_KEY
       value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key-XJBJaf"
