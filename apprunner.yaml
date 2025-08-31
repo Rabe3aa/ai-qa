@@ -9,11 +9,12 @@ build:
 
 run:
   runtime-version: 3.8
-  command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT} --log-level debug --lifespan off
+  command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT:-8000} --log-level debug --lifespan off
   network:
     port: 8000
-
   env:
+    - name: PORT
+      value: "8000"
     - name: AWS_REGION
       value: "us-east-1"
     - name: AWS_S3_BUCKET_INPUT
@@ -36,11 +37,10 @@ run:
       value: "5.0"
     - name: PYTHONUNBUFFERED
       value: "1"
-
   secrets:
     - name: OPENAI_API_KEY
-      value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key-XJBJaf"
+      value-from: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key-XJBJaf
     - name: SECRET_KEY
-      value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret-LLQ7bc"
+      value-from: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret-LLQ7bc
     - name: DATABASE_URL
-      value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url-2cVZUy"
+      value-from: arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url-2cVZUy
