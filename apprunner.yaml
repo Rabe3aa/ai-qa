@@ -23,7 +23,7 @@ run:
     - name: ALLOWED_ORIGINS
       value: '["*"]'
     - name: AUTO_SEED_DEMO
-      value: "true"
+      value: "false"
     - name: OPENAI_MAX_RETRIES
       value: "3"
     - name: OPENAI_BACKOFF_BASE_SECONDS
