@@ -58,3 +58,15 @@ async def seed_demo():
         return {"ok": True, "message": "Demo data seeded (if not already present)."}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+@router.post("/create-tables")
+async def create_tables():
+    """Create all ORM tables now (production DB). No auth; remove after debugging."""
+    try:
+        Base.metadata.create_all(bind=database.engine)
+        # Re-check existing tables
+        insp = inspect(database.engine)
+        existing = sorted(insp.get_table_names())
+        return {"ok": True, "message": "Tables created", "existing": existing}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
