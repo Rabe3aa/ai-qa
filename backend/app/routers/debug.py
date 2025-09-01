@@ -1,10 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from .. import database
 from ..database import SessionLocal, Base
 from ..models import Company, User, Project, Call, QAReport
 from ..seeder import seed_demo_data
+from jose import jwt, JWTError
+from ..auth import SECRET_KEY, ALGORITHM, oauth2_scheme
+import hashlib
 
 router = APIRouter()
 
@@ -69,4 +72,23 @@ async def create_tables():
         existing = sorted(insp.get_table_names())
         return {"ok": True, "message": "Tables created", "existing": existing}
     except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@router.get("/jwt/fingerprint")
+async def jwt_fingerprint():
+    """Return a non-secret fingerprint of the JWT secret to detect instance mismatch. No auth; remove after debugging."""
+    try:
+        key = SECRET_KEY or ""
+        fp = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+        return {"ok": True, "algorithm": ALGORITHM, "secret_sha256_prefix": fp, "length": len(key)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@router.get("/jwt/decode")
+async def jwt_decode(token: str = Depends(oauth2_scheme)):
+    """Attempt to decode the provided Bearer token and return minimal payload info. Remove after debugging."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return {"ok": True, "sub": payload.get("sub"), "exp": payload.get("exp")}
+    except JWTError as e:
         return {"ok": False, "error": str(e)}

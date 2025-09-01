@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 # Get JWT secret from environment or settings (no network calls at import time)
 SECRET_KEY = os.getenv("SECRET_KEY") or settings.secret_key
+# Optional secondary key to support seamless rotation or mixed-instance deployments
+SECONDARY_SECRET_KEY = os.getenv("SECONDARY_SECRET_KEY")
 
 ALGORITHM = settings.algorithm
 
@@ -56,7 +58,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Try validate with primary key, then optional secondary key (for rotation safety)
+        payload = None
+        last_error: Optional[Exception] = None
+        for key in [SECRET_KEY, SECONDARY_SECRET_KEY]:
+            if not key:
+                continue
+            try:
+                payload = jwt.decode(token, key, algorithms=[ALGORITHM])
+                break
+            except JWTError as e:
+                last_error = e
+                continue
+        if payload is None:
+            # Log at debug level without leaking token
+            logger.debug("JWT validation failed with both primary and secondary keys: %s", last_error)
+            raise credentials_exception
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
