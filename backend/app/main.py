@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import logging
 from .config import settings
 from .database import engine, Base
-from .routers import auth, calls, dashboard, projects, debug
+from .routers import auth, calls, dashboard, projects
 from .scheduler import start_scheduler
 from .seeder import seed_demo_data
 
@@ -63,7 +63,6 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(calls.router, prefix="/calls", tags=["calls"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
-app.include_router(debug.router, prefix="/debug", tags=["debug"])
 
 @app.get("/")
 async def root():

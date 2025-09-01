@@ -6,7 +6,7 @@ from ..database import SessionLocal, Base
 from ..models import Company, User, Project, Call, QAReport
 from ..seeder import seed_demo_data
 from jose import jwt, JWTError
-from ..auth import SECRET_KEY, ALGORITHM, oauth2_scheme
+from ..auth import SECRET_KEY, ALGORITHM, oauth2_scheme, SECONDARY_SECRET_KEY
 import hashlib
 
 router = APIRouter()
@@ -86,9 +86,15 @@ async def jwt_fingerprint():
 
 @router.get("/jwt/decode")
 async def jwt_decode(token: str = Depends(oauth2_scheme)):
-    """Attempt to decode the provided Bearer token and return minimal payload info. Remove after debugging."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return {"ok": True, "sub": payload.get("sub"), "exp": payload.get("exp")}
-    except JWTError as e:
-        return {"ok": False, "error": str(e)}
+    """Attempt to decode the provided Bearer token with primary/secondary keys and return minimal payload info. Remove after debugging."""
+    last_error = None
+    for which, key in [("primary", SECRET_KEY), ("secondary", SECONDARY_SECRET_KEY)]:
+        if not key:
+            continue
+        try:
+            payload = jwt.decode(token, key, algorithms=[ALGORITHM])
+            return {"ok": True, "using": which, "sub": payload.get("sub"), "exp": payload.get("exp")}
+        except JWTError as e:
+            last_error = e
+            continue
+    return {"ok": False, "error": f"Signature verification failed with both keys: {last_error}"}
