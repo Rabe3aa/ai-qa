@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import get_db
 import os
+import json
 from .models import User
 from .schemas import TokenData
 import logging
@@ -15,7 +16,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Get JWT secret from environment or settings (no network calls at import time)
-SECRET_KEY = os.getenv("SECRET_KEY") or settings.secret_key
+_raw_secret_env = os.getenv("SECRET_KEY")
+SECRET_KEY = _raw_secret_env or settings.secret_key
+# If the env var contains a JSON object (common when storing secrets as JSON), extract the value
+if SECRET_KEY and isinstance(SECRET_KEY, str) and SECRET_KEY.strip().startswith("{"):
+    try:
+        obj = json.loads(SECRET_KEY)
+        if isinstance(obj, dict):
+            # Common keys to look for
+            for k in ("SECRET_KEY", "secret_key", "secret"):
+                if k in obj and obj[k]:
+                    SECRET_KEY = obj[k]
+                    break
+    except Exception:
+        # Leave SECRET_KEY as-is if parsing fails
+        pass
 # Optional secondary key to support seamless rotation or mixed-instance deployments
 SECONDARY_SECRET_KEY = os.getenv("SECONDARY_SECRET_KEY")
 

@@ -42,5 +42,7 @@ run:
       value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/openai-key-XJBJaf"
     - name: SECRET_KEY
       value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret-LLQ7bc"
+    - name: SECONDARY_SECRET_KEY
+      value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/jwt-secret-LLQ7bc"
     - name: DATABASE_URL
       value-from: "arn:aws:secretsmanager:us-east-1:046246466895:secret:qa-system/database-url-2cVZUy"
