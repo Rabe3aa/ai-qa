@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List, Optional
 import uuid
 import boto3
 import logging
 from datetime import datetime
+from fastapi.responses import StreamingResponse
+import io
+import csv
 from ..database import get_db
-from ..models import Call, QAReport, User
+from ..models import Call, QAReport, User, Project
 from ..schemas import Call as CallSchema, QAReport as QAReportSchema, UploadRequest, UploadResponse
 from ..auth import get_current_active_user, require_company_manager
 from ..qa_service import EnhancedQAService
@@ -182,19 +186,104 @@ async def get_call_report(
 async def list_calls(
     project_id: Optional[int] = None,
     status: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    agent: Optional[str] = None,
+    q: Optional[str] = None,
     limit: int = 50,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """List calls with optional filtering"""
     query = db.query(Call)
+    if current_user.role != "admin":
+        query = query.join(Project).filter(Project.company_id == current_user.company_id)
     
     if project_id:
         query = query.filter(Call.project_id == project_id)
     if status:
         query = query.filter(Call.status == status)
+    if start_date:
+        query = query.filter(Call.uploaded_at >= start_date)
+    if end_date:
+        query = query.filter(Call.uploaded_at <= end_date)
+    if agent:
+        query = query.filter(Call.agent_name.ilike(f"%{agent}%"))
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                Call.filename.ilike(like),
+                Call.agent_name.ilike(like),
+                Call.customer_name.ilike(like)
+            )
+        )
     
     return query.order_by(Call.uploaded_at.desc()).limit(limit).all()
+
+@router.get("/export")
+async def export_calls(
+    project_id: Optional[int] = None,
+    status: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    agent: Optional[str] = None,
+    q: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Export calls as CSV with current filters"""
+    query = db.query(Call)
+    if current_user.role != "admin":
+        query = query.join(Project).filter(Project.company_id == current_user.company_id)
+    if project_id:
+        query = query.filter(Call.project_id == project_id)
+    if status:
+        query = query.filter(Call.status == status)
+    if start_date:
+        query = query.filter(Call.uploaded_at >= start_date)
+    if end_date:
+        query = query.filter(Call.uploaded_at <= end_date)
+    if agent:
+        query = query.filter(Call.agent_name.ilike(f"%{agent}%"))
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                Call.filename.ilike(like),
+                Call.agent_name.ilike(like),
+                Call.customer_name.ilike(like)
+            )
+        )
+
+    rows = query.order_by(Call.uploaded_at.desc()).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "id", "project_id", "filename", "agent_name", "customer_name", "status",
+        "uploaded_at", "processed_at", "call_duration", "error_message"
+    ])
+    for c in rows:
+        writer.writerow([
+            c.id,
+            c.project_id,
+            c.filename,
+            c.agent_name or "",
+            c.customer_name or "",
+            c.status,
+            c.uploaded_at.isoformat() if c.uploaded_at else "",
+            c.processed_at.isoformat() if c.processed_at else "",
+            c.call_duration if c.call_duration is not None else "",
+            c.error_message or "",
+        ])
+
+    buffer.seek(0)
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    headers = {
+        "Content-Disposition": f"attachment; filename=calls_{ts}.csv"
+    }
+    return StreamingResponse(iter([buffer.getvalue()]), media_type="text/csv", headers=headers)
 
 @router.post("/process-pending")
 async def process_pending_calls(

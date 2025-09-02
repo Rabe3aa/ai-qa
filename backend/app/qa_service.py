@@ -12,8 +12,30 @@ logger = logging.getLogger(__name__)
 class EnhancedQAService:
     def __init__(self):
         # Get OpenAI API key from environment or settings (no network calls)
-        openai_key = os.getenv("OPENAI_API_KEY") or settings.openai_api_key
-        
+        raw_openai_key = os.getenv("OPENAI_API_KEY") or settings.openai_api_key
+        openai_key = raw_openai_key
+        # If the env var contains a JSON object (common when storing secrets as JSON), extract the value
+        if openai_key and isinstance(openai_key, str):
+            cleaned = openai_key.strip()
+            if cleaned.startswith("{"):
+                try:
+                    obj = json.loads(cleaned)
+                    if isinstance(obj, dict):
+                        # Common keys to look for
+                        for k in ("OPENAI_API_KEY", "openai_api_key", "api_key", "key", "OPENAI", "token"):
+                            if k in obj and obj[k]:
+                                openai_key = obj[k]
+                                break
+                except Exception:
+                    # Leave openai_key as-is if parsing fails
+                    pass
+            # If wrapped in quotes, strip them
+            if isinstance(openai_key, str) and openai_key.startswith('"') and openai_key.endswith('"'):
+                openai_key = openai_key.strip('"')
+
+        # Initialize client (avoid logging secrets)
+        if not openai_key:
+            logger.warning("OpenAI API key is not configured; QA feedback generation may fail.")
         self.openai_client = OpenAI(
             api_key=openai_key,
             max_retries=settings.openai_max_retries,
@@ -36,6 +58,7 @@ class EnhancedQAService:
             logger.info(f"Starting transcription job {job_name} with media format '{media_format}' for key '{s3_key}'")
             
             self.transcribe_client.start_transcription_job(
+                
                 TranscriptionJobName=job_name,
                 Media={'MediaFileUri': media_uri},
                 MediaFormat=media_format,
